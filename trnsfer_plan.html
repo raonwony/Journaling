@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transfer Plan — 일랑작업소</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF7;
+    --card: #FFFFFF;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --ink: #1e1c18;
+    --muted: #7a7468;
+    --hint: #b0a898;
+    --teal: #5DCAA5;
+    --amber: #EF9F27;
+    --coral: #F0997B;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 48px 28px 80px;
+  }
+  .wrap { max-width: 740px; margin: 0 auto; }
+
+  .header-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin-bottom: 6px;
+  }
+  h1 { font-size: 24px; font-weight: 500; margin-bottom: 4px; }
+  .header-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.75;
+    margin-bottom: 40px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(10px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  /* ── STEP INDICATOR ── */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border2);
+    transition: background 0.3s;
+  }
+  .step-dot.active { background: var(--ink); }
+  .step-dot.done { background: var(--teal); }
+  .step-line { flex:1; height:0.5px; background: var(--border2); }
+
+  /* ── STEP LABELS ── */
+  .step-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin-bottom: 14px;
+  }
+
+  /* ── STEP 1 ── */
+  .sticky-input-wrap {
+    position: relative;
+    animation: fadeUp 0.3s ease both;
+    margin-bottom: 10px;
+  }
+  .sticky-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 14px 40px 14px 16px;
+    font-family: 'Gowun Dodum', cursive;
+    font-size: 14px;
+    color: #2e2a1a;
+    background: #FFF59D;
+    border-radius: 2px;
+    box-shadow: 2px 3px 10px rgba(0,0,0,0.09);
+    resize: none;
+    line-height: 1.6;
+    min-height: 52px;
+  }
+  .sticky-input::placeholder { color: #a09070; opacity:0.7; }
+  .sticky-input:focus { box-shadow: 2px 3px 14px rgba(0,0,0,0.14); }
+  .remove-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 22px; height: 22px;
+    background: rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    color: #5a4a30;
+    line-height: 22px;
+    text-align: center;
+    display: none;
+  }
+  .sticky-input-wrap:not(:first-child) .remove-btn { display: block; }
+
+  .add-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: none;
+    border: 0.5px dashed var(--border2);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    width: 100%;
+    transition: background 0.15s;
+    margin-top: 2px;
+  }
+  .add-btn:hover { background: rgba(0,0,0,0.03); }
+
+  .next-btn {
+    margin-top: 28px;
+    padding: 13px 28px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: opacity 0.15s;
+  }
+  .next-btn:hover { opacity: 0.82; }
+
+  /* ── STEP 2 BOARD ── */
+  .board {
+    display: grid;
+    grid-template-columns: 1fr 52px 1fr;
+    gap: 0;
+    align-items: start;
+  }
+  .col-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin-bottom: 14px;
+    display: block;
+  }
+  .sticky-display {
+    position: relative;
+    padding: 13px 16px 15px;
+    font-family: 'Gowun Dodum', cursive;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #2e2a1a;
+    border-radius: 2px;
+    box-shadow: 2px 3px 10px rgba(0,0,0,0.09);
+    margin-bottom: 10px;
+  }
+  .sticky-fold {
+    position: absolute;
+    bottom:0; right:0;
+    width:14px; height:14px;
+    background: rgba(0,0,0,0.07);
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  }
+  .filter-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 28px;
+    gap: 5px;
+  }
+  .f-dot { width:4px; height:4px; background: var(--hint); border-radius:50%; opacity:0.35; }
+  .f-chevron {
+    width:0; height:0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 8px solid var(--hint);
+    opacity:0.28;
+  }
+  .f-label {
+    font-size:9px; letter-spacing:1.5px; color:var(--hint);
+    text-transform:uppercase; writing-mode:vertical-rl;
+    margin-top:6px; opacity:0.45;
+  }
+  .result-input-card {
+    background: var(--card);
+    border: 0.5px solid var(--border2);
+    border-left: 3px solid var(--teal);
+    border-radius: 6px;
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    animation: fadeUp 0.3s ease both;
+  }
+  .result-from {
+    font-size: 11px;
+    color: var(--hint);
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .result-from::before { content: '→ '; }
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--hint);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .task-input, .time-input {
+    width: 100%;
+    border: none;
+    border-bottom: 0.5px solid var(--border2);
+    outline: none;
+    background: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 4px 0 6px;
+    margin-bottom: 10px;
+  }
+  .task-input::placeholder, .time-input::placeholder { color: var(--hint); }
+  .task-input:focus, .time-input:focus { border-bottom-color: var(--ink); }
+  .time-input { margin-bottom: 0; }
+  .drop-note {
+    border: 0.5px dashed var(--border2);
+    border-radius: 6px;
+    padding: 11px 14px;
+    font-size: 12px;
+    color: var(--hint);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  /* ── STEP 3 SUMMARY ── */
+  .summary-header {
+    margin-bottom: 28px;
+  }
+  .summary-month {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .sum-sticky {
+    padding: 11px 14px;
+    font-family: 'Gowun Dodum', cursive;
+    font-size: 13px;
+    color: #2e2a1a;
+    border-radius: 2px;
+    box-shadow: 2px 3px 8px rgba(0,0,0,0.08);
+    line-height: 1.6;
+  }
+
+  .sum-arrow {
+    text-align: center;
+    font-size: 16px;
+    color: var(--hint);
+  }
+
+  .sum-result {
+    background: var(--card);
+    border: 0.5px solid var(--border2);
+    border-left: 3px solid var(--teal);
+    border-radius: 6px;
+    padding: 11px 13px;
+  }
+  .sum-task {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .sum-time {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sum-time::before { content: '⏰'; font-size: 10px; }
+
+  .sum-drop {
+    background: var(--card);
+    border: 0.5px dashed var(--border2);
+    border-radius: 6px;
+    padding: 11px 13px;
+    font-size: 12px;
+    color: var(--hint);
+  }
+  .sum-drop-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--hint);
+    margin-bottom: 6px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .rule-box {
+    margin-top: 32px;
+    padding: 16px 18px;
+    background: var(--card);
+    border: 0.5px solid var(--border2);
+    border-left: 3px solid var(--teal);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .rule-box strong { color: var(--ink); font-weight: 500; }
+
+  .watermark {
+    text-align: right;
+    font-size: 11px;
+    color: var(--hint);
+    margin-top: 28px;
+    letter-spacing: 1px;
+    opacity: 0.55;
+  }
+
+  .restart-btn {
+    margin-top: 24px;
+    padding: 11px 22px;
+    background: none;
+    border: 0.5px solid var(--border2);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .restart-btn:hover { background: rgba(0,0,0,0.03); }
+
+  /* ── NOTICE ── */
+  .notice-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #FFF9E6;
+    border: 0.5px solid #E8D88A;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #7a6a30;
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+  .notice-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── PRINT ── */
+  .print-btn {
+    margin-top: 16px;
+    margin-left: 8px;
+    padding: 11px 22px;
+    background: none;
+    border: 0.5px solid var(--border2);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .print-btn:hover { background: rgba(0,0,0,0.03); }
+
+  @media print {
+    .step-indicator, .rule-box, .restart-btn, .print-btn, .notice-bar { display: none !important; }
+    body { padding: 24px; background: #fff; }
+    .wrap { max-width: 100%; }
+  }
+
+  @media (max-width: 540px) {
+    .board { grid-template-columns: 1fr; }
+    .filter-col { flex-direction: row; justify-content: center; padding-top: 0; }
+    .f-label { writing-mode: horizontal-tb; }
+    .summary-row { grid-template-columns: 1fr 24px 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header-label">월말 루틴 · Transfer Plan</div>
+  <h1>못 다한 일을 다음 달로</h1>
+  <p class="header-desc">
+    이월은 실패 기록이 아니에요.<br>
+    목표를 포기하지 않고 다음 판으로 가져가는 의지예요.
+  </p>
+
+  <div class="notice-bar">
+    <span class="notice-icon">⚠️</span>
+    <span>이 페이지에 적은 내용은 <strong>저장되지 않아요.</strong> 창을 닫으면 사라집니다. 완성 후 인쇄하거나 스크린샷으로 남겨두세요.</span>
+  </div>
+
+  <!-- step indicator -->
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-line"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <div class="step-label">이번 달 못 끝낸 일을 적어주세요</div>
+    <div id="inputStack">
+      <div class="sticky-input-wrap">
+        <textarea class="sticky-input" placeholder="이번 달 못 끝낸 일을 적어요" rows="2"></textarea>
+        <button class="remove-btn" onclick="removeItem(this)">×</button>
+      </div>
+    </div>
+    <button class="add-btn" onclick="addItem()">＋ 항목 추가</button>
+    <br>
+    <button class="next-btn" onclick="goStep2()">필터링하러 가기 →</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" style="display:none;">
+    <div class="board">
+      <div>
+        <span class="col-label">이번 달 못 끝낸 일</span>
+        <div id="stickyDisplay"></div>
+      </div>
+      <div class="filter-col">
+        <div class="f-dot"></div>
+        <div class="f-dot"></div>
+        <div class="f-chevron"></div>
+        <div class="f-chevron" style="opacity:0.14;"></div>
+        <div class="f-label">filter</div>
+      </div>
+      <div>
+        <span class="col-label">다음 달로 가져갈 일</span>
+        <div id="resultStack"></div>
+        <div class="drop-note">비워두면 드롭 처리돼요 ✓</div>
+      </div>
+    </div>
+    <button class="next-btn" style="margin-top:32px;" onclick="goStep3()">완성하기 →</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" style="display:none;">
+    <div class="summary-header">
+      <div class="step-label">Transfer Plan 완성</div>
+      <div class="summary-month" id="summaryMonth"></div>
+    </div>
+    <div id="summaryRows"></div>
+    <div id="dropSection"></div>
+
+    <div class="rule-box">
+      핵심은 두 가지예요.<br>
+      <strong>1. 더 작은 동작으로 쪼개기</strong> — "자료 작성 전체"가 아니라 "첫 페이지 목차만"으로.<br>
+      <strong>2. 언제 시작하겠다</strong>로 바꾸기 — 마감이 아니라 시작 시점만 정해요.
+    </div>
+
+    <div class="watermark">일랑작업소 @ilang.jakeupso</div>
+    <br>
+    <button class="restart-btn" onclick="restart()">↺ 다시 작성하기</button>
+  </div>
+
+</div>
+<script>
+  const stickyColors  = ['#FFF59D','#F8BBD9','#B3E5FC','#C8E6C9','#FFE0B2'];
+  const borderColors  = ['#C8B800','#E0508A','#2FA8D8','#4CAF72','#E07C00'];
+  const rotations     = [-1.2, 0.8, -0.4, 1.1, -0.6];
+  let items = [];
+
+  function addItem() {
+    const stack = document.getElementById('inputStack');
+    const idx = stack.children.length;
+    const color = stickyColors[idx % stickyColors.length];
+    const wrap = document.createElement('div');
+    wrap.className = 'sticky-input-wrap';
+    wrap.innerHTML = `
+      <textarea class="sticky-input" placeholder="이번 달 못 끝낸 일을 적어요" rows="2" style="background:${color};"></textarea>
+      <button class="remove-btn" onclick="removeItem(this)">×</button>`;
+    stack.appendChild(wrap);
+    wrap.querySelector('textarea').focus();
+  }
+
+  function removeItem(btn) {
+    btn.closest('.sticky-input-wrap').remove();
+  }
+
+  function setDots(step) {
+    for (let i = 1; i <= 3; i++) {
+      const d = document.getElementById('dot' + i);
+      d.classList.remove('active','done');
+      if (i < step) d.classList.add('done');
+      if (i === step) d.classList.add('active');
+    }
+  }
+
+  function goStep2() {
+    const inputs = document.querySelectorAll('#inputStack .sticky-input');
+    items = [];
+    inputs.forEach((inp, i) => {
+      const val = inp.value.trim();
+      if (val) items.push({
+        text: val,
+        color: stickyColors[i % stickyColors.length],
+        border: borderColors[i % borderColors.length],
+        rot: rotations[i % rotations.length]
+      });
+    });
+    if (items.length === 0) { alert('못 끝낸 일을 하나 이상 적어주세요.'); return; }
+
+    const stickyDisplay = document.getElementById('stickyDisplay');
+    stickyDisplay.innerHTML = '';
+    items.forEach(item => {
+      const d = document.createElement('div');
+      d.className = 'sticky-display';
+      d.style.cssText = `background:${item.color}; transform:rotate(${item.rot}deg);`;
+      d.innerHTML = `${item.text}<div class="sticky-fold"></div>`;
+      stickyDisplay.appendChild(d);
+    });
+
+    const resultStack = document.getElementById('resultStack');
+    resultStack.innerHTML = '';
+    items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'result-input-card';
+      card.style.borderLeftColor = item.border;
+      card.style.animationDelay = (i * 0.05) + 's';
+      card.innerHTML = `
+        <div class="result-from">${item.text}</div>
+        <div class="field-label">더 작게 쪼갠 일</div>
+        <input type="text" class="task-input" placeholder="예) 첫 페이지 목차만 잡기">
+        <div class="field-label">시작 시간</div>
+        <input type="text" class="time-input" placeholder="예) 6월 3일 오전">`;
+      resultStack.appendChild(card);
+    });
+
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    setDots(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goStep3() {
+    const cards = document.querySelectorAll('#resultStack .result-input-card');
+    const kept = [], dropped = [];
+
+    cards.forEach((card, i) => {
+      const task = card.querySelector('.task-input').value.trim();
+      const time = card.querySelector('.time-input').value.trim();
+      if (task) {
+        kept.push({ original: items[i], task, time });
+      } else {
+        dropped.push(items[i]);
+      }
+    });
+
+    const now = new Date();
+    document.getElementById('summaryMonth').textContent =
+      `${now.getFullYear()}년 ${now.getMonth() + 1}월 → ${now.getMonth() + 2 > 12 ? 1 : now.getMonth() + 2}월`;
+
+    const summaryRows = document.getElementById('summaryRows');
+    summaryRows.innerHTML = '';
+    kept.forEach((k, i) => {
+      const row = document.createElement('div');
+      row.className = 'summary-row';
+      row.style.animationDelay = (i * 0.06) + 's';
+      row.innerHTML = `
+        <div class="sum-sticky" style="background:${k.original.color}; transform:rotate(${k.original.rot}deg);">
+          ${k.original.text}
+        </div>
+        <div class="sum-arrow">→</div>
+        <div class="sum-result" style="border-left-color:${k.original.border};">
+          <div class="sum-task">${k.task}</div>
+          ${k.time ? `<div class="sum-time">${k.time} 시작</div>` : ''}
+        </div>`;
+      summaryRows.appendChild(row);
+    });
+
+    const dropSection = document.getElementById('dropSection');
+    dropSection.innerHTML = '';
+    if (dropped.length > 0) {
+      const label = document.createElement('div');
+      label.className = 'sum-drop-label';
+      label.textContent = '이번 달 드롭';
+      dropSection.appendChild(label);
+      dropped.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'sum-drop';
+        el.style.marginBottom = '8px';
+        el.textContent = d.text;
+        dropSection.appendChild(el);
+      });
+    }
+
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'block';
+    setDots(3);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function restart() {
+    document.getElementById('inputStack').innerHTML = `
+      <div class="sticky-input-wrap">
+        <textarea class="sticky-input" placeholder="이번 달 못 끝낸 일을 적어요" rows="2"></textarea>
+        <button class="remove-btn" onclick="removeItem(this)">×</button>
+      </div>`;
+    document.getElementById('step3').style.display = 'none';
+    document.getElementById('step1').style.display = 'block';
+    setDots(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
