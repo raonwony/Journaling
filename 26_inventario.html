@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인벤타리오 2026 : 나의 아날로그 취향 증서</title>
+    <style>
+        /* 기본 스타일 리셋 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background-color: #f7f6f3;
+            color: #444444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 1페이지: 질문 화면 전용 컨테이너 */
+        .quiz-container {
+            max-width: 520px;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 40px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(110, 125, 110, 0.04);
+        }
+        h2 {
+            font-size: 1.25rem;
+            color: #5c6b5b;
+            text-align: center;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+        p.intro {
+            text-align: center;
+            font-size: 0.88rem;
+            color: #a8a8a8;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+        
+        /* 개별 브랜드 전체 그리드 */
+        .brand-pool {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 25px;
+            max-height: 500px; /* 브랜드가 많아져서 스크롤바 추가 */
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        /* 스크롤바 커스텀 디자인 */
+        .brand-pool::-webkit-scrollbar { width: 4px; }
+        .brand-pool::-webkit-scrollbar-thumb { background-color: #edebe6; border-radius: 2px; }
+
+        .brand-label {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background-color: #fafafa;
+            border: 1px solid #eaeaea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .brand-label:hover {
+            background-color: #f1f3f1;
+        }
+        input[type="checkbox"] {
+            margin-right: 10px;
+            accent-color: #5c6b5b;
+            width: 14px;
+            height: 14px;
+        }
+        .action-btn {
+            width: 100%;
+            background-color: #5c6b5b;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background-color: #495548;
+        }
+
+        /* 2페이지: 전면 증서 화면 스타일 */
+        #result-page {
+            display: none;
+            width: 100%;
+            max-width: 480px;
+            animation: fadeIn 0.5s ease forwards;
+        }
+        .cert-card {
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding: 35px 25px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.03);
+            transition: background-color 0.4s ease;
+        }
+        .cert-inner-border {
+            border: 2px double transparent;
+            padding: 35px 20px;
+        }
+        .cert-serial {
+            font-size: 0.68rem;
+            font-family: 'Courier New', monospace;
+            text-align: left;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+            opacity: 0.5;
+        }
+        .cert-header {
+            font-size: 0.68rem;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            text-align: center;
+            opacity: 0.6;
+        }
+        .cert-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            letter-spacing: -0.5px;
+            line-height: 1.4;
+            text-align: center;
+        }
+        .cert-body {
+            font-size: 0.88rem;
+            color: #444444;
+            line-height: 1.75;
+            margin: 35px 0;
+            word-break: keep-all;
+            text-align: justify;
+        }
+        .cert-stamp {
+            margin: 30px auto 15px auto;
+            width: 65px;
+            height: 65px;
+            border: 1px solid transparent;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.52rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .cert-date {
+            font-size: 0.78rem;
+            margin-bottom: 5px;
+            text-align: center;
+            opacity: 0.5;
+        }
+
+        .reset-btn {
+            width: 100%;
+            background-color: transparent;
+            border: 1px solid transparent;
+            padding: 12px;
+            font-size: 0.88rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            letter-spacing: 0.3px;
+            transition: all 0.2s;
+        }
+        .reset-btn:hover { background-color: rgba(0, 0, 0, 0.03); }
+
+        .ilang-footer {
+            margin-top: 25px;
+            text-align: center;
+            font-size: 0.72rem;
+            line-height: 1.6;
+            letter-spacing: -0.2px;
+            opacity: 0.7;
+        }
+        .ilang-footer a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(0,0,0,0.15); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="question-page" class="quiz-container">
+        <h2>인벤타리오 취향 맵핑 (Mapping)</h2>
+        <p class="intro">이번 페어에서 유독 발길이 오래 머물렀던<br>브랜드들을 모두 선택해 주세요.</p>
+        
+        <div class="brand-pool">
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 카키모리</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 두성종이</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 수키도키</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 흑심</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 삼원페이퍼</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 슈아뜰리에</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 세일러 만년필</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 소소문구</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 아무개씨</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 몰스킨</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 고쿠요</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 한국파이롯트</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 겨울엔토스트가좋아</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 트롤스페이퍼</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 도미넌트 인더스트리</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 글월(GEULWOL)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 서커스보이밴드</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 자크 허빈</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 제브라</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 양지사</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 후르츠후라이</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 파버카스텔</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 로디아</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 펜텔</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 페이퍼리안</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 유니(UNI)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 한솔제지</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> mt (마스킹테이프)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 컴포지션 스튜디오</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 까렌다쉬</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 키티버니포니</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 페이퍼테일러</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 포인트오브뷰(POV)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 라이플페이퍼</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 트래블러스컴퍼니</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 공장(GONGJANG)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 지혜이(GEEHEY)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 펜코(PENCO)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 모트모트</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 아이코닉</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 지구화학</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 오첵</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 미니모니</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 안테리크</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="paper"> 더컴플리티스트</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 오이뮤(OIMU)</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="cute"> 비온뒤</label>
+            <label class="brand-label"><input type="checkbox" class="brand-check" data-type="tool"> 유어마인드</label>
+        </div>
+
+        <button class="action-btn" onclick="analyzeTaste()">나의 아날로그 증서 확인하기</button>
+    </div>
+
+    <div id="result-page">
+        <div class="cert-card" id="dynamic-card">
+            <div class="cert-inner-border" id="dynamic-border">
+                <div class="cert-serial" id="cert-no">NO. 2026-0000</div>
+                <div class="cert-header">INVENTARIO 2026 : PIECE OF ANALOG</div>
+                <div class="cert-title" id="cert-title">유형 타이틀</div>
+                <div class="cert-body" id="cert-desc">분석된 성향 리포트가 이곳에 나타납니다.</div>
+                <div class="cert-date">2026. 06</div>
+                <div class="cert-stamp" id="dynamic-stamp">ILANG<br>ARCHIVE</div>
+            </div>
+        </div>
+        
+        <button class="reset-btn" id="dynamic-reset-btn" onclick="resetQuiz()">다른 취향 지도 그려보기 (다시 하기)</button>
+        
+        <div class="ilang-footer" id="ilang-footer-links">
+            일랑작업소 인스타그램 <a href="https://instagram.com/ilang.archive" target="_blank">@ilang.archive</a> | 
+            스레드 <a href="https://threads.net/@raony.ilang" target="_blank">@raony.ilang</a> | 
+            블로그 <a href="https://blog.naver.com/ilang_archive" target="_blank">blog.naver.com/ilang_archive</a>
+        </div>
+    </div>
+
+<script>
+    function analyzeTaste() {
+        const checkedBrands = document.querySelectorAll('.brand-check:checked');
+        
+        if (checkedBrands.length === 0) {
+            alert("최소 한 개 이상의 브랜드를 선택해 주세요.");
+            return;
+        }
+        
+        let counts = { cute: 0, paper: 0, tool: 0 };
+        checkedBrands.forEach(brand => {
+            const type = brand.getAttribute('data-type');
+            counts[type]++;
+        });
+        
+        let maxType = "";
+        const maxVal = Math.max(counts.cute, counts.paper, counts.tool);
+        
+        // 동점 처리 로직
+        const typesAtMax = Object.keys(counts).filter(key => counts[key] === maxVal);
+        if (typesAtMax.length > 1) {
+            maxType = "mix";
+        } else {
+            maxType = typesAtMax[0];
+        }
+        
+        let cardBg = "";
+        let fontColor = "";
+        let certTitle = "";
+        let certDesc = "";
+        let serialPrefix = "";
+        
+        if (maxType === 'paper') {
+            cardBg = "#E2ECE1"; fontColor = "#556454"; serialPrefix = "PP-";
+            certTitle = "[차분한 온도]<br>여백의 가능성을 믿는 백지 예찬론자";
+            certDesc = "귀하는 이번 인벤타리오에서 화려한 장식보다 빈 종이가 품고 있는 묵직한 가능성에 가장 깊이 몰입하셨습니다. 사각거리는 평량별 종이의 질감을 음미하고 내지에 집착하며, 온전한 나만의 쉼을 기록으로 완성할 줄 아는 깊은 아날로그 내공을 지니고 계시네요. 유행에 휩쓸리지 않고 묵묵히 서정적인 종이 냄새를 쫓아 생각의 궤적을 채워나가는 당신은 지독하게 낭만적인 '기록쟁이'임을 인증합니다.";
+        } else if (maxType === 'tool') {
+            cardBg = "#D6E2E9"; fontColor = "#4A5E6A"; serialPrefix = "TL-";
+            certTitle = "[정밀한 온도]<br>손끝의 밀도를 쫓는 아날로그 탐험가";
+            certDesc = "귀하는 문구를 단순히 쓰는 도구를 넘어 하나의 오브제이자 정밀한 장비로 대하는 깊은 안목을 보여주셨습니다. 펜촉의 미세한 각도 차이, 흑연의 단단함, 잉크가 서서히 스며드는 색감 변화 속에서 깊은 평온을 찾으시는군요. 도구가 주는 손맛과 데스크 위의 완벽한 밀도를 즐길 줄 아는 당신은 클래식한 감각을 지닌 '아날로그 장인'임을 인증합니다.";
+        } else if (maxType === 'cute') {
+            cardBg = "#EAD5D3"; fontColor = "#8B6F6D"; serialPrefix = "CT-";
+            certTitle = "[경쾌한 온도]<br>일상의 장면을 편집하는 조각 수집가";
+            certDesc = "귀하는 이번 인벤타리오에서 눈이 즐거워지는 선명한 색감과 위트 있는 디자인에 뜨겁게 반응하셨습니다. 평범한 하루의 한 장면을 스티커와 마스킹 테이프, 다정한 일러스트 조각들로 포착해 내는 따뜻한 시선을 지니고 계시네요. 일상의 귀여움을 끈질기게 수집하여 나만의 도화지를 경쾌하게 채워나가는 당신은 감각적인 '다꾸 편집가'임을 인증합니다.";
+        } else {
+            cardBg = "#ECEAE4"; fontColor = "#66625B"; serialPrefix = "MX-";
+            certTitle = "[조화로운 온도]<br>경계를 넘나드는 올라운드 문구 정원사";
+            certDesc = "귀하는 하나의 카테고리에 갇히지 않고 문구의 다채로운 매력을 균형 있게 다룰 줄 아는 넓은 시야를 가지셨습니다. 귀여운 조각들로 일상을 편집하다가도 이내 차분하게 종이와 펜촉의 서정성에 집중하는 유연한 라이프를 즐기시네요. 다양한 아날로그 요소들을 조화롭게 피워내는 영리한 예술가임을 인증합니다.";
+        }
+        
+        document.body.style.backgroundColor = "#f7f6f3"; // 배경 유지
+        const targetCard = document.getElementById('dynamic-card');
+        targetCard.style.backgroundColor = cardBg;
+        targetCard.style.color = fontColor;
+        document.getElementById('dynamic-border').style.border = "2px double " + fontColor;
+        document.getElementById('dynamic-stamp').style.borderColor = fontColor;
+        document.getElementById('dynamic-reset-btn').style.borderColor = fontColor;
+        document.getElementById('dynamic-reset-btn').style.color = fontColor;
+        document.getElementById('cert-title').innerHTML = certTitle;
+        document.getElementById('cert-desc').innerText = certDesc;
+        const randomNo = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('cert-no').innerText = "SERIAL NO. " + serialPrefix + randomNo;
+        document.getElementById('ilang-footer-links').style.color = fontColor;
+        document.getElementById('question-page').style.display = 'none';
+        document.getElementById('result-page').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetQuiz() {
+        document.querySelectorAll('.brand-check').forEach(box => box.checked = false);
+        document.getElementById('result-page').style.display = 'none';
+        document.getElementById('question-page').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
