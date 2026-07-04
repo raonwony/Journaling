@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>일랑 닷 · 나의 주파수 맞추기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Song+Myung&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --cream:#F5F2EB;
+    --cream-deep:#FAF8F3;
+    --ink:#2A2622;
+    --ink-soft:#736A5C;
+    --ink-faint:#A79C87;
+    --line:#DED2B4;
+    --sage:#8FA179;
+    --sage-deep:#6E8259;
+    --sage-pale:#DEE6D0;
+    --clay:#C9A188;
+    --shadow: 0 10px 30px -12px rgba(42,38,34,.18);
+    --ease: cubic-bezier(.6,0,.2,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100svh;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Pretendard Variable','Pretendard',-apple-system,sans-serif;
+    display:flex; align-items:flex-start; justify-content:center;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    opacity:.5; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+  .app{
+    position:relative; z-index:1;
+    width:100%; max-width:460px;
+    min-height:100svh;
+    margin:0 auto;
+    background:var(--cream-deep);
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column;
+    padding: 28px 26px 34px;
+  }
+  @media(min-width:520px){
+    body{padding:32px 0;}
+    .app{min-height:auto; border-radius:22px; margin:32px auto;}
+  }
+
+  .progress{ display:flex; gap:8px; justify-content:center; margin-bottom:34px; }
+  .progress span{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--line); transition:all .5s var(--ease);
+  }
+  .progress span.active{ background:var(--sage-deep); width:18px; border-radius:4px; }
+  .progress span.done{ background:var(--ink-faint); }
+
+  .stage{ display:none; flex:1; flex-direction:column; animation:fadeUp .55s var(--ease); }
+  .stage.active{ display:flex; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  .eyebrow{
+    font-size:12px; letter-spacing:.16em; color:var(--ink-faint);
+    font-weight:600; margin-bottom:10px; text-transform:uppercase;
+  }
+  h1{
+    font-family:'Song Myung', serif; font-weight:400;
+    font-size:26px; line-height:1.4; margin:0 0 10px;
+  }
+  .sub{ color:var(--ink-soft); font-size:14.5px; line-height:1.6; margin:0 0 22px; }
+
+  .input-row{ display:flex; gap:8px; margin-bottom:20px; }
+  .input-row input{
+    flex:1; min-width:0;
+    border:none; border-bottom:1.5px solid var(--line);
+    background:transparent; padding:10px 2px;
+    font-size:15px; font-family:inherit; color:var(--ink);
+    outline:none; transition:border-color .25s;
+  }
+  .input-row input:focus{ border-color:var(--sage-deep); }
+  .input-row button{
+    flex-shrink:0; border:none; background:var(--ink);
+    color:var(--cream-deep); font-size:14px; font-weight:600;
+    padding:0 18px; border-radius:20px; cursor:pointer;
+    transition:transform .15s var(--ease), background .2s;
+  }
+  .input-row button:active{ transform:scale(.94); }
+
+  .bubble-field{
+    position:relative;
+    flex:1; min-height:200px; max-height:38vh; overflow-y:auto;
+    display:flex; flex-wrap:wrap; align-content:flex-start;
+    gap:10px 8px; padding:14px 4px 8px;
+    border-top:1px dashed var(--line);
+    transition:opacity .4s ease;
+  }
+  .bubble-field.fade-out{ opacity:0; }
+  .bubble-field:empty::before{
+    content:"아직 아무것도 없어요. 위 칸에 자잘한 할 일, 생각을 적어보세요.";
+    color:var(--ink-faint); font-size:13.5px; padding:20px 4px;
+  }
+  .bubble{
+    --r: 0deg;
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--cream);
+    border:1px solid var(--line);
+    padding:8px 13px 9px;
+    font-size:13.5px; color:var(--ink-soft);
+    clip-path: polygon(3% 8%, 40% 0%, 97% 5%, 100% 55%, 96% 100%, 55% 96%, 5% 100%, 0% 45%);
+    transform:rotate(var(--r));
+    box-shadow:0 3px 8px -4px rgba(42,38,34,.25);
+    transition:transform .25s var(--ease), opacity .5s ease, border-color .2s, background .2s;
+    animation:pop .35s var(--ease);
+  }
+  @keyframes pop{ from{opacity:0; transform:scale(.5) rotate(var(--r));} to{opacity:1; transform:scale(1) rotate(var(--r));} }
+
+  .count-hint{ font-size:12.5px; color:var(--ink-faint); margin:14px 0 0; text-align:center; }
+
+  .primary-btn{
+    margin-top:20px; width:100%; padding:15px;
+    border:none; border-radius:999px; cursor:pointer;
+    background:var(--sage-deep); color:var(--cream-deep);
+    font-family:inherit; font-size:15px; font-weight:600;
+    letter-spacing:.02em;
+    transition:transform .15s var(--ease), opacity .25s, background .2s;
+  }
+  .primary-btn:disabled{ background:var(--line); color:var(--ink-faint); cursor:not-allowed; }
+  .primary-btn:not(:disabled):active{ transform:scale(.97); }
+  .ghost-btn{
+    margin-top:12px; width:100%; padding:13px; background:transparent;
+    border:1px solid var(--line); border-radius:999px; cursor:pointer;
+    font-family:inherit; font-size:14px; color:var(--ink-soft); font-weight:500;
+  }
+
+  .remaining-hint{
+    font-size:12.5px; color:var(--sage-deep); font-weight:600;
+    text-align:center; margin:0 0 14px; transition:opacity .4s ease;
+  }
+  .bubble-field.elim-mode{ border-top:1px dashed var(--line); justify-content:center; align-content:flex-start; }
+  .bubble-field.elim-mode .bubble{ cursor:pointer; user-select:none; }
+  .bubble-field.elim-mode .bubble:hover{ border-color:var(--clay); transform:scale(1.06) rotate(var(--r)); }
+  .bubble-field.elim-mode .bubble:active{ transform:scale(.94) rotate(var(--r)); }
+  .bubble.struck{ text-decoration:line-through; opacity:.75; }
+  .bubble.removing{ animation:crossOut .55s var(--ease) forwards; pointer-events:none; }
+  @keyframes crossOut{
+    0%{ opacity:1; transform:scale(1.05) rotate(var(--r)); }
+    100%{ opacity:0; transform:scale(.25) rotate(calc(var(--r) + 30deg)); }
+  }
+
+  .circle-zone{
+    position:relative; width:220px; height:220px; margin:26px auto 10px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .blot{
+    position:absolute; inset:0; border-radius:46% 54% 40% 60%/56% 44% 58% 42%;
+    background:radial-gradient(circle at 38% 32%, #A9B993, var(--sage-deep) 72%);
+    box-shadow:0 18px 40px -14px rgba(110,130,89,.55);
+    display:flex; align-items:center; justify-content:center; text-align:center; padding:0 20px;
+    animation:circleGrow .9s var(--ease) both, blob 7s ease-in-out infinite 1s;
+  }
+  .blot-word{
+    font-family:'Song Myung', serif; color:#fff; font-size:20px; line-height:1.4;
+    opacity:0; transform:scale(1.6);
+  }
+  .blot-word.show{ animation:stampPop .65s var(--ease) forwards; }
+  @keyframes circleGrow{
+    0%{ transform:scale(0); opacity:0; }
+    65%{ transform:scale(1.08); opacity:1; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+  @keyframes blob{
+    0%,100%{ border-radius:46% 54% 40% 60%/56% 44% 58% 42%; }
+    50%{ border-radius:58% 42% 54% 46%/44% 58% 42% 56%; }
+  }
+  @keyframes stampPop{
+    0%{ opacity:0; transform:scale(2.2) rotate(-10deg); }
+    55%{ opacity:1; transform:scale(.85) rotate(4deg); }
+    100%{ opacity:1; transform:scale(1) rotate(0deg); }
+  }
+
+  .stage-3-align{ align-items:center; }
+  #resultCard{
+    width:100%; aspect-ratio:9/16; max-height:56vh;
+    border-radius:18px; overflow:hidden; position:relative;
+    background:
+      radial-gradient(120% 70% at 50% 12%, rgba(143,161,121,.16), transparent 60%),
+      var(--cream);
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:26px; gap:18px;
+    border:1px solid var(--line);
+  }
+  #resultCard .card-eyebrow{
+    font-size:11px; letter-spacing:.24em; color:var(--sage-deep); font-weight:600;
+  }
+  .final-blot{
+    position:relative; width:62%; aspect-ratio:1/1;
+    border-radius:46% 54% 40% 60%/56% 44% 58% 42%;
+    background:radial-gradient(circle at 38% 32%, #A9B993, var(--sage-deep) 74%);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    box-shadow:0 20px 44px -16px rgba(110,130,89,.5);
+  }
+  .final-blot span{
+    font-family:'Song Myung', serif; color:#fff; font-size:clamp(18px,4.4vw,24px);
+    padding:0 14%; line-height:1.35; word-break:keep-word;
+  }
+  #resultCard .card-footer{ text-align:center; }
+  #resultCard .card-footer .brand{ font-family:'Song Myung',serif; font-size:15px; color:var(--ink); }
+  #resultCard .card-footer .date{ font-size:11.5px; color:var(--ink-faint); margin-top:4px; }
+
+  .actions{ width:100%; margin-top:22px; }
+  .note{ font-size:11.5px; color:var(--ink-faint); text-align:center; margin-top:14px; line-height:1.6; }
+
+  .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="progress" aria-hidden="true">
+    <span class="p-dot active" data-n="1"></span>
+    <span class="p-dot" data-n="2"></span>
+    <span class="p-dot" data-n="3"></span>
+  </div>
+
+  <section class="stage active" id="stage1">
+    <p class="eyebrow">STEP 1 · Brain Dump</p>
+    <h1>머릿속을 다<br>꺼내보세요</h1>
+    <p class="sub">하고 싶은 일, 해야 할 일, 사고 싶은 것, 가고 싶은 곳... 지금 머릿속에 떠오르는 걸 검열 없이 적어주세요. 크든 작든 다 괜찮아요.</p>
+
+    <div class="input-row">
+      <input type="text" id="wordInput" placeholder="예: 제주도 여행 가기, 운동하기..." maxlength="18" autocomplete="off">
+      <button id="addBtn" type="button">추가</button>
+    </div>
+
+    <div class="bubble-field" id="bubbleField" aria-live="polite"></div>
+    <p class="count-hint" id="countHint">3개 이상 적으면 다음으로 넘어갈 수 있어요 (<span id="countNum">0</span>/3)</p>
+
+    <button class="primary-btn" id="toStage2" disabled>하나씩 지워서 원씽 찾기 →</button>
+  </section>
+
+  <section class="stage" id="stage2">
+    <p class="eyebrow">STEP 2 · Elimination</p>
+    <h1 id="stage2Title">가장 안 중요한 것부터<br>하나씩 지워보세요</h1>
+    <p class="sub" id="stage2Sub">덜 중요한 순서대로 하나씩 눌러 지워주세요. 마지막 하나가 남으면, 그게 오늘의 원씽이 돼요.</p>
+    <p class="remaining-hint" id="remainingHint">남은 것 <span id="remainingNum">0</span>개</p>
+
+    <div id="elimWrapper"></div>
+
+    <div class="circle-zone" id="circleZone" style="display:none;">
+      <div class="blot" id="blot"><span class="blot-word" id="blotWord"></span></div>
+    </div>
+  </section>
+
+  <section class="stage stage-3-align" id="stage3">
+    <p class="eyebrow">DONE · 일랑 닷</p>
+    <h1 style="margin-bottom:18px;">오늘의 주파수가<br>맞춰졌어요</h1>
+
+    <div id="resultCard">
+      <p class="card-eyebrow">ILANG · DOT</p>
+      <div class="final-blot"><span id="finalWord"></span></div>
+      <div class="card-footer">
+        <p class="brand">일랑 · 하나의 결심</p>
+        <p class="date" id="cardDate"></p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary-btn" id="downloadBtn">이미지로 저장</button>
+      <button class="ghost-btn" id="resetBtn">다시 하기</button>
+    </div>
+    <p class="note">이미지가 저장되지 않으면 화면을 길게 눌러 저장하거나, 스크린샷으로 남겨주세요. (iOS는 새 탭에서 열릴 수 있어요)</p>
+  </section>
+
+</div>
+
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let activeBubbles = [];
+  let isAnimating = false;
+
+  const wordInput   = document.getElementById('wordInput');
+  const addBtn      = document.getElementById('addBtn');
+  const bubbleField = document.getElementById('bubbleField');
+  const countNum    = document.getElementById('countNum');
+  const toStage2Btn = document.getElementById('toStage2');
+  const stage1 = document.getElementById('stage1');
+  const stage2 = document.getElementById('stage2');
+  const stage3 = document.getElementById('stage3');
+  const progressDots = document.querySelectorAll('.p-dot');
+  const elimWrapper = document.getElementById('elimWrapper');
+  const remainingHint = document.getElementById('remainingHint');
+  const remainingNum = document.getElementById('remainingNum');
+  const stage2Sub = document.getElementById('stage2Sub');
+  const circleZone = document.getElementById('circleZone');
+  const blotWord = document.getElementById('blotWord');
+  const finalWord = document.getElementById('finalWord');
+  const cardDate = document.getElementById('cardDate');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const live = document.getElementById('live');
+
+  // 일랑 확정 팔레트 (Brand_Design_Book.pptx, Slide 6 기준)
+  const brandPalette = [
+    { bg:'#D7DECD', border:'#A7B893' }, // Sage Green
+    { bg:'#F2E1B9', border:'#D6B673' }, // Butter Yellow
+    { bg:'#CDD7E1', border:'#9AB0C4' }, // Dove Blue
+    { bg:'#D7D2E1', border:'#AFA5C6' }, // Lavender Mist
+    { bg:'#F5D7D7', border:'#E0A9A9' }, // Blush Pink
+    { bg:'#FAE1CD', border:'#E7B587' }  // Soft Coral
+  ];
+  let lastPaletteIdx = -1;
+  function pickPaletteColor(){
+    let idx;
+    do { idx = Math.floor(Math.random()*brandPalette.length); } while(idx === lastPaletteIdx && brandPalette.length > 1);
+    lastPaletteIdx = idx;
+    return brandPalette[idx];
+  }
+
+  function addWord(){
+    const val = wordInput.value.trim();
+    if(!val) { wordInput.focus(); return; }
+
+    const color = pickPaletteColor();
+    const b = document.createElement('span');
+    b.className = 'bubble';
+    b.dataset.word = val;
+    b.style.setProperty('--r', (Math.random()*22-11)+'deg');
+    b.style.background = color.bg;
+    b.style.borderColor = color.border;
+    b.style.color = '#2A2622';
+    b.textContent = val;
+    bubbleField.appendChild(b);
+    bubbleField.scrollTop = bubbleField.scrollHeight;
+
+    wordInput.value = '';
+    wordInput.focus();
+    const count = bubbleField.querySelectorAll('.bubble').length;
+    countNum.textContent = count;
+    toStage2Btn.disabled = count < 3;
+  }
+  addBtn.addEventListener('click', addWord);
+  wordInput.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addWord(); } });
+
+  function setProgress(n){
+    progressDots.forEach(d=>{
+      const i = Number(d.dataset.n);
+      d.classList.toggle('active', i===n);
+      d.classList.toggle('done', i<n);
+    });
+  }
+  function switchStage(from, to){ from.classList.remove('active'); to.classList.add('active'); }
+
+  function playDroplet(){
+    try{
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1100, now);
+      osc.frequency.exponentialRampToValueAtTime(280, now + 0.16);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.35, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.24);
+      osc.onended = () => ctx.close();
+    }catch(e){}
+  }
+
+  toStage2Btn.addEventListener('click', () => {
+    activeBubbles = Array.from(bubbleField.querySelectorAll('.bubble')).map(el => ({ el, word: el.dataset.word }));
+
+    bubbleField.classList.add('elim-mode');
+    elimWrapper.appendChild(bubbleField);
+    bubbleField.classList.remove('fade-out');
+
+    activeBubbles.forEach(({el}) => {
+      el.addEventListener('click', () => eliminate(el));
+    });
+
+    updateRemainingUI();
+    switchStage(stage1, stage2);
+    setProgress(2);
+    live.textContent = '이제 하나씩 지워서 원씽을 찾아주세요.';
+  });
+
+  function updateRemainingUI(){
+    const n = activeBubbles.length;
+    remainingNum.textContent = n;
+    if(n >= 4) stage2Sub.textContent = '덜 중요한 순서대로 하나씩 눌러 지워주세요.';
+    else if(n === 3) stage2Sub.textContent = '조금 더 좁혀볼까요? 셋 중 하나를 지워주세요.';
+    else if(n === 2) stage2Sub.textContent = '마지막 관문이에요. 이 둘 중 하나만 남겨주세요.';
+  }
+
+  function eliminate(el){
+    if(isAnimating) return;
+    if(activeBubbles.length <= 1) return;
+    isAnimating = true;
+
+    el.classList.add('struck');
+    setTimeout(() => {
+      el.classList.add('removing');
+      setTimeout(() => {
+        activeBubbles = activeBubbles.filter(b => b.el !== el);
+        el.remove();
+        updateRemainingUI();
+        isAnimating = false;
+        live.textContent = '남은 것 ' + activeBubbles.length + '개';
+
+        if(activeBubbles.length === 1){
+          finalizeOneThing(activeBubbles[0].word);
+        }
+      }, reduceMotion ? 60 : 550);
+    }, reduceMotion ? 40 : 260);
+  }
+
+  function finalizeOneThing(word){
+    isAnimating = true;
+    stage2Sub.textContent = '이게 오늘의 원씽이에요.';
+    remainingHint.style.opacity = '0';
+    bubbleField.classList.add('fade-out');
+
+    setTimeout(() => {
+      elimWrapper.style.display = 'none';
+      circleZone.style.display = 'flex';
+      const blot = document.getElementById('blot');
+      blot.style.animation = 'none';
+      void blot.offsetWidth;
+      blot.style.animation = reduceMotion
+        ? 'circleGrow .3s ease both'
+        : 'circleGrow .9s cubic-bezier(.6,0,.2,1) both, blob 7s ease-in-out infinite 1s';
+
+      blotWord.textContent = word;
+
+      setTimeout(() => {
+        playDroplet();
+        if('vibrate' in navigator){ try{ navigator.vibrate(14); }catch(e){} }
+        blotWord.classList.add('show');
+        live.textContent = '오늘의 원씽: ' + word;
+      }, reduceMotion ? 100 : 350);
+
+      setTimeout(() => {
+        finalWord.textContent = word;
+        const today = new Date();
+        cardDate.textContent = today.toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+        switchStage(stage2, stage3);
+        setProgress(3);
+        isAnimating = false;
+      }, reduceMotion ? 400 : 1450);
+
+    }, reduceMotion ? 150 : 450);
+  }
+
+  downloadBtn.addEventListener('click', async () => {
+    if(typeof html2canvas === 'undefined'){
+      live.textContent = '이미지 저장 기능을 불러오지 못했습니다. 화면을 캡처해주세요.';
+      return;
+    }
+    downloadBtn.disabled = true;
+    const originalLabel = downloadBtn.textContent;
+    downloadBtn.textContent = '이미지 만드는 중...';
+
+    const clone = buildExportCard();
+    document.body.appendChild(clone);
+    try{
+      const canvas = await html2canvas(clone, { backgroundColor: '#F6EFDD', scale: 1, width: 1080, height: 1920 });
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      link.download = 'ilang-dot-' + stamp + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }catch(e){
+      live.textContent = '이미지 저장에 실패했어요. 화면을 길게 눌러 저장해주세요.';
+    }finally{
+      clone.remove();
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = originalLabel;
+    }
+  });
+
+  function buildExportCard(){
+    const node = document.createElement('div');
+    node.style.cssText = "position:fixed; left:-99999px; top:0; width:1080px; height:1920px; background:radial-gradient(120% 60% at 50% 10%, rgba(143,161,121,.20), transparent 60%), #F6EFDD; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Pretendard Variable', sans-serif; gap:64px;";
+
+    const eyebrow = document.createElement('p');
+    eyebrow.textContent = 'ILANG · DOT';
+    eyebrow.style.cssText = 'font-size:26px;letter-spacing:.3em;color:#6E8259;font-weight:600;margin:0;';
+
+    const blot = document.createElement('div');
+    blot.style.cssText = "width:600px; height:600px; border-radius:46% 54% 40% 60%/56% 44% 58% 42%; background:radial-gradient(circle at 38% 32%, #A9B993, #6E8259 74%); display:flex; align-items:center; justify-content:center; text-align:center; box-shadow:0 40px 90px -30px rgba(110,130,89,.55);";
+    const span = document.createElement('span');
+    span.textContent = finalWord.textContent;
+    span.style.cssText = "font-family:'Song Myung', serif; color:#fff; font-size:64px; padding:0 90px; line-height:1.4;";
+    blot.appendChild(span);
+
+    const footer = document.createElement('div');
+    footer.style.cssText = 'text-align:center;';
+    const brand = document.createElement('p');
+    brand.textContent = '일랑 · 하나의 결심';
+    brand.style.cssText = "font-family:'Song Myung', serif; font-size:36px; color:#2A2622; margin:0 0 10px;";
+    const date = document.createElement('p');
+    date.textContent = cardDate.textContent;
+    date.style.cssText = 'font-size:24px; color:#A79C87; margin:0;';
+    footer.appendChild(brand);
+    footer.appendChild(date);
+
+    node.appendChild(eyebrow);
+    node.appendChild(blot);
+    node.appendChild(footer);
+    return node;
+  }
+
+  resetBtn.addEventListener('click', () => { window.location.reload(); });
+})();
+</script>
+</body>
+</html>
