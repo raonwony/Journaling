@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>쓰다 만 다이어리 처방전</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 레이아웃: 한 칸짜리 모바일 열(최대 480px). 소개 → 문항 5개 → 처방전 → 점 찍기 */
+:root {
+  --bg: #F6F4FB;
+  --surface: #FFFFFF;
+  --ink: #37364A;
+  --ink-soft: #6E6C85;
+  --line: #E6E2F2;
+  --lavender: #DAD4F5;
+  --lavender-deep: #6B62C4;
+  --mint: #D5EFE4;
+  --peach: #FBDDD3;
+  --butter: #FBF0C9;
+  --sky: #D6E8F7;
+  --stamp: #E49A89;
+  --font: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.wrap { max-width: 480px; margin: 0 auto; padding: 28px 20px 56px; }
+h1, h2, h3, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+[hidden] { display: none !important; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--lavender-deep); outline-offset: 3px; border-radius: 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 52px; padding: 0 24px; border: 0; border-radius: 16px;
+  background: var(--lavender); color: var(--ink); font-weight: 650; font-size: 16px;
+  transition: transform .15s ease, background .15s ease;
+}
+.btn:hover { background: #D0C9F2; }
+.btn:active { transform: scale(.98); }
+.btn.wide { width: 100%; }
+.btn.ghost { background: transparent; border: 1.5px solid var(--line); color: var(--ink-soft); font-weight: 550; }
+.btn.ghost:hover { background: #fff; }
+
+/* 소개 */
+.intro h1 { font-size: 28px; line-height: 1.3; font-weight: 750; margin: 22px 0 12px; }
+.intro p.lead { color: var(--ink-soft); }
+.notebook {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+  padding: 22px 22px 18px 34px; position: relative;
+  box-shadow: 0 8px 24px rgba(107, 98, 196, .08);
+}
+.notebook::before {
+  content: ''; position: absolute; left: 16px; top: 18px; bottom: 18px; width: 2px;
+  background: repeating-linear-gradient(to bottom, var(--line) 0 6px, transparent 6px 14px);
+}
+.nb-line { height: 14px; display: flex; align-items: center; margin: 0 0 14px; }
+.nb-line i { display: block; height: 7px; border-radius: 4px; }
+.nb-line.empty { border-bottom: 1.5px dashed var(--line); height: 12px; }
+.nb-note { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+.meta { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0 22px; padding: 0; list-style: none; }
+.meta li { font-size: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; color: var(--ink-soft); }
+
+/* 문항 */
+.progress { display: flex; align-items: center; gap: 8px; margin-bottom: 26px; }
+.progress .dots { display: flex; gap: 6px; flex: 1; }
+.progress .dots span { flex: 1; height: 6px; border-radius: 3px; background: var(--line); transition: background .25s ease; }
+.progress .dots span.on { background: var(--lavender-deep); opacity: .55; }
+.progress .count { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.q-title { font-size: 22px; line-height: 1.4; font-weight: 700; margin-bottom: 22px; }
+.options { display: grid; gap: 10px; }
+.opt {
+  text-align: left; width: 100%; padding: 16px 18px; border-radius: 16px;
+  background: var(--surface); border: 1.5px solid var(--line); line-height: 1.5;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+.opt:hover { border-color: var(--lavender); background: #FCFBFF; }
+.opt:active { transform: scale(.985); }
+.opt.picked { border-color: var(--lavender-deep); background: #F1EFFC; }
+.back { margin-top: 18px; background: none; border: 0; color: var(--ink-soft); font-size: 14px; padding: 8px 0; }
+.back:disabled { opacity: .0; pointer-events: none; }
+
+/* 처방전 */
+.result-lead { font-size: 14px; color: var(--ink-soft); margin-bottom: 12px; }
+.rx {
+  position: relative; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 22px; padding: 22px 20px 20px; overflow: hidden;
+  box-shadow: 0 10px 30px rgba(107, 98, 196, .1);
+}
+.rx::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 8px; background: var(--tone, var(--lavender)); }
+.rx-head { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 14px; }
+.rx-mark { font-size: 30px; font-weight: 800; color: var(--lavender-deep); opacity: .75; font-style: italic; }
+.rx-head h2 { font-size: 20px; font-weight: 750; }
+.rx-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; padding-bottom: 14px; border-bottom: 1.5px dashed var(--line); }
+.rx-row label { display: block; font-size: 12px; color: var(--ink-soft); }
+.rx-row input {
+  width: 100%; font: inherit; font-weight: 650; border: 0; border-bottom: 1.5px solid var(--line);
+  background: transparent; color: var(--ink); padding: 4px 0 2px; border-radius: 0; min-width: 0;
+}
+.rx-row input::placeholder { color: #B2B0C4; font-weight: 450; }
+.rx-row input:focus-visible { outline: none; border-bottom-color: var(--lavender-deep); }
+.rx-date { font-size: 14px; color: var(--ink-soft); white-space: nowrap; padding-bottom: 3px; }
+.type-badge { display: inline-block; font-size: 13px; font-weight: 650; padding: 3px 12px; border-radius: 999px; background: var(--tone, var(--lavender)); margin: 16px 0 6px; }
+.dx { font-size: 24px; line-height: 1.3; font-weight: 750; margin-bottom: 6px; }
+.dx-desc { color: var(--ink-soft); font-size: 15px; }
+.sec { margin-top: 18px; }
+.sec h3 { font-size: 13px; font-weight: 700; color: var(--lavender-deep); margin-bottom: 4px; }
+.sec p { font-size: 15.5px; }
+.today {
+  margin-top: 20px; border-radius: 16px; padding: 14px 16px; background: var(--tone, var(--lavender));
+}
+.today h3 { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 2px; }
+.today p { font-size: 16px; font-weight: 650; }
+.rx-foot { margin-top: 16px; font-size: 12px; color: var(--ink-soft); max-width: calc(100% - 92px); }
+.stamp {
+  position: absolute; right: 18px; bottom: 16px; width: 66px; height: 66px; border-radius: 50%;
+  border: 2px solid var(--stamp); color: var(--stamp); display: grid; place-items: center; text-align: center;
+  font-size: 13px; font-weight: 750; line-height: 1.15; transform: rotate(-12deg); opacity: .85;
+}
+.stamp::before { content: ''; position: absolute; inset: 3px; border: 1px dashed var(--stamp); border-radius: 50%; }
+.actions { display: grid; gap: 10px; margin-top: 18px; }
+.toast { min-height: 22px; font-size: 14px; color: var(--lavender-deep); text-align: center; margin-top: 8px; }
+
+/* 점 찍기 */
+.dotplay { margin-top: 40px; }
+.dotplay h2 { font-size: 20px; font-weight: 750; margin-bottom: 6px; }
+.dotplay p.sub { color: var(--ink-soft); font-size: 15px; margin-bottom: 14px; }
+.page {
+  position: relative; aspect-ratio: 1 / 1; width: 100%; border-radius: 20px; background-color: var(--surface);
+  background-image: radial-gradient(circle, #D9D5EA 1.2px, transparent 1.6px); background-size: 22px 22px;
+  border: 1px solid var(--line); overflow: hidden; touch-action: manipulation; cursor: crosshair;
+  user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.page .dot {
+  position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%;
+  background: var(--c, var(--lavender-deep)); opacity: .8; animation: pop .28s ease-out;
+}
+@keyframes pop { from { transform: scale(0); } 60% { transform: scale(1.35); } to { transform: scale(1); } }
+.page-msg { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; color: #A5A2BC; font-size: 15px; text-align: center; padding: 0 24px; }
+.dot-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.dot-status { font-size: 15px; font-weight: 600; }
+.dot-foot .btn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+
+footer.site { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+footer.site a { color: var(--lavender-deep); text-decoration: none; }
+footer.site a:hover { text-decoration: underline; }
+footer.site .links { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; }
+
+@media (max-width: 380px) {
+  .intro h1 { font-size: 25px; }
+  .q-title { font-size: 20px; }
+  .dx { font-size: 22px; }
+  .rx-foot { max-width: 100%; margin-bottom: 70px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- 소개 -->
+  <section id="intro" class="intro" aria-labelledby="intro-title">
+    <div class="notebook" aria-hidden="true">
+      <div class="nb-line"><i style="width:78%;background:var(--lavender)"></i></div>
+      <div class="nb-line"><i style="width:64%;background:var(--sky)"></i></div>
+      <div class="nb-line"><i style="width:42%;background:var(--mint)"></i></div>
+      <div class="nb-line empty"></div>
+      <div class="nb-line empty"></div>
+      <div class="nb-line empty"></div>
+      <p class="nb-note">첫 몇 장만 채워진 채로 잠든 다이어리</p>
+    </div>
+    <h1 id="intro-title">쓰다 만 다이어리 처방전</h1>
+    <p class="lead">서랍 속 다이어리가 멈춘 이유를 가볍게 체크하고, 지금 내 리듬에 맞는 작은 처방을 받아 보세요.</p>
+    <ul class="meta">
+      <li>문항 5개</li>
+      <li>약 1분</li>
+      <li>답은 저장되지 않아요</li>
+    </ul>
+    <button class="btn wide" id="start" type="button">체크 시작하기</button>
+  </section>
+
+  <!-- 문항 -->
+  <section id="quiz" hidden aria-live="polite">
+    <div class="progress">
+      <div class="dots" id="dots" aria-hidden="true"></div>
+      <span class="count" id="count"></span>
+    </div>
+    <h2 class="q-title" id="q-title"></h2>
+    <div class="options" id="options"></div>
+    <button class="back" id="back" type="button">← 이전 문항</button>
+  </section>
+
+  <!-- 결과 -->
+  <section id="result" hidden aria-live="polite">
+    <p class="result-lead">체크가 끝났어요. 지금 내 리듬에 맞는 처방전이에요.</p>
+    <article class="rx" id="rx">
+      <div class="rx-head"><span class="rx-mark">Rx</span><h2>기록 처방전</h2></div>
+      <div class="rx-row">
+        <div>
+          <label for="pname">이름</label>
+          <input id="pname" type="text" maxlength="12" placeholder="이름을 적어 보세요" autocomplete="off">
+        </div>
+        <div class="rx-date" id="rx-date"></div>
+      </div>
+      <span class="type-badge" id="r-type"></span>
+      <p class="dx" id="r-dx"></p>
+      <p class="dx-desc" id="r-desc"></p>
+      <div class="sec"><h3>처방</h3><p id="r-rx"></p></div>
+      <div class="sec"><h3>복용법</h3><p id="r-dose"></p></div>
+      <div class="sec"><h3>주의사항</h3><p id="r-caution"></p></div>
+      <div class="today"><h3>오늘의 한 줄</h3><p id="r-line"></p></div>
+      <p class="rx-foot">병원 처방이 아니라, 기록 습관을 위한 가벼운 가이드예요.</p>
+      <div class="stamp" aria-hidden="true"><span>일랑<br>확인</span></div>
+    </article>
+    <div class="actions">
+      <button class="btn wide" id="copy" type="button">처방전 문구 복사하기</button>
+      <button class="btn ghost wide" id="retry" type="button">다시 체크하기</button>
+    </div>
+    <p class="toast" id="toast" role="status"></p>
+
+    <!-- 점 찍기 -->
+    <section class="dotplay" aria-labelledby="dp-title">
+      <h2 id="dp-title">첫 번째 알약, 점 하나</h2>
+      <p class="sub">처방은 지금 시작해도 돼요. 아래 빈 페이지를 톡 눌러 오늘의 점을 찍어 보세요.</p>
+      <div class="page" id="page" role="button" tabindex="0" aria-label="빈 페이지. 눌러서 점을 찍어요">
+        <div class="page-msg" id="page-msg">여기를 톡 눌러 보세요</div>
+      </div>
+      <div class="dot-foot">
+        <span class="dot-status" id="dot-status" role="status"></span>
+        <button class="btn ghost" id="dot-reset" type="button">새 페이지</button>
+      </div>
+    </section>
+  </section>
+
+  <footer class="site">
+    <p>Written by Raony · 일랑 작업소</p>
+    <div class="links">
+      <a href="https://www.instagram.com/ilang.archive" target="_blank" rel="noopener">인스타그램 @ilang.archive</a>
+      <a href="https://www.threads.net/@raony.ilang" target="_blank" rel="noopener">스레드 @raony.ilang</a>
+      <a href="https://blog.naver.com/ilang_archive" target="_blank" rel="noopener">블로그</a>
+    </div>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var QUESTIONS = [
+    { q: '마지막으로 다이어리를 덮었던 순간을 떠올려 보세요. 가장 가까운 것은?', o: [
+      ['P', '빈 페이지가 생긴 뒤로 펼치기가 머쓱해졌어요'],
+      ['B', '바쁜 시기를 지나고 보니 몇 주가 흘러 있었어요'],
+      ['F', '쓰다 보니 굳이 써야 하나 싶어졌어요'],
+      ['T', '칸이나 종이가 내 손에 잘 안 맞았어요'] ] },
+    { q: '다이어리 앞에 앉으면 나는 어떤 편인가요?', o: [
+      ['P', '예쁘고 알차게 쓰고 싶어서 시작이 무거워요'],
+      ['B', '시간이 날 때 한꺼번에 쓰려고 미뤄요'],
+      ['F', '무엇을 써야 할지 막막해요'],
+      ['T', '펜이나 종이가 마음에 안 들어 손이 안 가요'] ] },
+    { q: '쓸 말이 없는 날, 다이어리는 어떻게 되나요?', o: [
+      ['P', '그날은 건너뛰고, 밀린 칸이 계속 신경 쓰여요'],
+      ['B', '쓸 여유가 없어서 가방 속에 그대로 있어요'],
+      ['F', '쓸 게 없는 날이 대부분이라 점점 멀어져요'],
+      ['T', '쓰고 싶은데 페이지 구성이 불편해요'] ] },
+    { q: '지금 내게 가장 필요한 것은 무엇인가요?', o: [
+      ['P', '기준을 낮추고 가볍게 시작하는 방법'],
+      ['B', '1분도 걸리지 않는 짧은 기록법'],
+      ['F', '무엇을 쓸지 알려 주는 작은 힌트'],
+      ['T', '내 손에 맞는 도구 한 가지'] ] },
+    { q: '서랍 속 다이어리를 꺼냈을 때, 가장 먼저 드는 생각은?', o: [
+      ['P', '처음 몇 장은 참 예뻤는데…'],
+      ['B', '또 며칠이 비었네, 시간이 없었지'],
+      ['F', '이걸 다시 써서 뭐 하나 싶어요'],
+      ['T', '다음엔 다른 노트로 바꿔 볼까 해요'] ] }
+  ];
+
+  var RESULTS = {
+    P: { tone: 'var(--lavender)', type: '기준 높음형', dx: '빈 페이지 머쓱 증후군',
+      desc: '첫 장의 기준이 높아서, 한 번 비고 나면 다시 펼치기 어려워지는 상태예요.',
+      rx: '밀린 페이지는 그대로 두고, 오늘 날짜가 적힌 새 페이지에서 다시 시작하세요.',
+      dose: '하루 한 번, 점(.) 하나 또는 단어 하나. 3일만 이어 보세요.',
+      caution: '지난 칸을 한꺼번에 채우는 일은 금지예요.',
+      line: '오늘 기분을 한 단어로 적어 보세요.' },
+    B: { tone: 'var(--sky)', type: '시간 부족형', dx: '바쁨 누적 증후군',
+      desc: '기록하고 싶은 마음은 있는데, 시간이 앞을 막고 있는 상태예요.',
+      rx: '하루 끝, 불 끄기 전에 30초만 다이어리를 펼치세요.',
+      dose: '취침 전 1회, 단어 하나. 바쁜 날은 날짜만 적어도 기록으로 인정해요.',
+      caution: '길게 쓰려고 미루지 마세요. 짧을수록 오래 이어져요.',
+      line: '오늘 가장 오래 한 일은 무엇이었나요?' },
+    F: { tone: 'var(--butter)', type: '소재 고갈형', dx: '쓸 말 없음 증후군',
+      desc: '쓸 거리가 없다고 느끼면서 기록과 조금씩 멀어진 상태예요.',
+      rx: '정해진 질문 하나에만 답하세요. 일기가 아니라 대답이라고 생각하면 가벼워요.',
+      dose: '하루 한 번, 질문 한 줄에 답 한 줄.',
+      caution: '특별한 일을 찾으려 애쓰지 마세요. 평범한 하루가 재료예요.',
+      line: '오늘 먹은 것 중 가장 맛있었던 것은?' },
+    T: { tone: 'var(--mint)', type: '도구 불일치형', dx: '손에 안 맞는 노트 증후군',
+      desc: '의지보다 노트와 펜의 궁합이 맞지 않아서 멀어진 상태예요.',
+      rx: '가장 손이 가는 펜 하나와, 여백이 넉넉한 페이지 하나를 정해 주세요.',
+      dose: '일주일 동안 같은 펜, 같은 노트로만 써 보세요.',
+      caution: '새 노트를 또 사기 전에, 서랍 속 노트에 먼저 기회를 주세요.',
+      line: '지금 가장 쓰기 편한 펜으로 오늘 날짜를 적어 보세요.' }
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var intro = $('intro'), quiz = $('quiz'), result = $('result');
+  var step = 0, answers = [];
+
+  function show(el) {
+    [intro, quiz, result].forEach(function (s) { s.hidden = s !== el; });
+    window.scrollTo(0, 0);
+  }
+
+  function renderQuestion() {
+    var item = QUESTIONS[step];
+    $('q-title').textContent = item.q;
+    $('count').textContent = (step + 1) + ' / ' + QUESTIONS.length;
+    var dots = $('dots'); dots.innerHTML = '';
+    QUESTIONS.forEach(function (_, i) {
+      var s = document.createElement('span'); if (i <= step) s.className = 'on'; dots.appendChild(s);
+    });
+    var box = $('options'); box.innerHTML = '';
+    item.o.forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'opt'; b.textContent = opt[1];
+      if (answers[step] === opt[0]) b.classList.add('picked');
+      b.addEventListener('click', function () { pick(opt[0]); });
+      box.appendChild(b);
+    });
+    $('back').disabled = step === 0;
+  }
+
+  function pick(type) {
+    answers[step] = type;
+    if (step < QUESTIONS.length - 1) { step += 1; renderQuestion(); }
+    else { showResult(); }
+  }
+
+  function decide() {
+    var score = { P: 0, B: 0, F: 0, T: 0 };
+    answers.forEach(function (t) { score[t] += 1; });
+    var max = Math.max.apply(null, Object.keys(score).map(function (k) { return score[k]; }));
+    for (var i = answers.length - 1; i >= 0; i--) {
+      if (score[answers[i]] === max) return answers[i];
+    }
+    return 'P';
+  }
+
+  var current = null;
+  function showResult() {
+    current = RESULTS[decide()];
+    $('rx').style.setProperty('--tone', current.tone);
+    $('r-type').textContent = current.type;
+    $('r-dx').textContent = current.dx;
+    $('r-desc').textContent = current.desc;
+    $('r-rx').textContent = current.rx;
+    $('r-dose').textContent = current.dose;
+    $('r-caution').textContent = current.caution;
+    $('r-line').textContent = current.line;
+    $('rx-date').textContent = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    $('toast').textContent = '';
+    resetPage();
+    show(result);
+  }
+
+  $('start').addEventListener('click', function () { step = 0; answers = []; renderQuestion(); show(quiz); });
+  $('back').addEventListener('click', function () { if (step > 0) { step -= 1; renderQuestion(); } });
+  $('retry').addEventListener('click', function () { step = 0; answers = []; show(intro); });
+
+  /* 처방전 문구 복사 */
+  function toast(msg) { $('toast').textContent = msg; }
+  function plainText() {
+    var name = $('pname').value.trim();
+    return [
+      '[기록 처방전]' + (name ? ' ' + name + ' 님' : ''),
+      '진단: ' + current.dx + ' (' + current.type + ')',
+      '처방: ' + current.rx,
+      '복용법: ' + current.dose,
+      '주의사항: ' + current.caution,
+      '오늘의 한 줄: ' + current.line
+    ].join('\n');
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta); return ok;
+  }
+  $('copy').addEventListener('click', function () {
+    var text = plainText();
+    var done = function () { toast('복사했어요. 댓글이나 스토리에 붙여 넣어 보세요.'); };
+    var fail = function () { toast(fallbackCopy(text) ? '복사했어요. 댓글이나 스토리에 붙여 넣어 보세요.' : '복사가 막혀 있어요. 처방전 화면을 캡처해 주세요.'); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fail);
+      else fail();
+    } catch (e) { fail(); }
+  });
+
+  /* 점 찍기 */
+  var COLORS = ['#8F86D6', '#9CCFB8', '#F0A898', '#8DB9E0', '#E8CB6E'];
+  var page = $('page'), count = 0;
+  function updateDotStatus() {
+    $('page-msg').hidden = count > 0;
+    $('dot-status').textContent = count === 0 ? '아직 비어 있는 페이지예요' : (count === 1 ? '오늘의 기록 완료. 이걸로 충분해요.' : '점 ' + count + '개. 오늘도 기록했어요.');
+  }
+  function addDot(x, y) {
+    if (count >= 120) return;
+    var d = document.createElement('span');
+    d.className = 'dot';
+    d.style.left = x + '%'; d.style.top = y + '%';
+    d.style.setProperty('--c', COLORS[count % COLORS.length]);
+    page.appendChild(d); count += 1; updateDotStatus();
+  }
+  function resetPage() {
+    Array.prototype.slice.call(page.querySelectorAll('.dot')).forEach(function (d) { page.removeChild(d); });
+    count = 0; updateDotStatus();
+  }
+  page.addEventListener('pointerdown', function (e) {
+    var r = page.getBoundingClientRect();
+    addDot(((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100);
+  });
+  page.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); addDot(15 + Math.random() * 70, 15 + Math.random() * 70); }
+  });
+  $('dot-reset').addEventListener('click', resetPage);
+  updateDotStatus();
+})();
+</script>
+</body>
+</html>
